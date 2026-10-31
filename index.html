@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>GPUVision Lab</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <header class="app-header">
+
+            <div>
+                <h1>GPUVision Lab</h1>
+
+                <p>
+                    GPU-Based SIMD Parallel Image Processing
+                    using WebGPU Shaders
+                </p>
+            </div>
+
+            <span
+                id="gpuStatus"
+                class="gpu-status"
+            >
+                Connecting to GPU...
+            </span>
+
+        </header>
+
+        <div
+            id="errorMessage"
+            class="error-message"
+            hidden
+        ></div>
+
+        <main>
+
+            <section class="upload-section">
+
+                <label
+                    for="imageUpload"
+                    class="upload-button"
+                >
+                    Upload Dataset Image
+                </label>
+
+                <input
+                    type="file"
+                    id="imageUpload"
+                    accept="image/png, image/jpeg, image/webp"
+                    hidden
+                >
+
+                <button
+                    type="button"
+                    id="resetButton"
+                    class="secondary-button"
+                    disabled
+                >
+                    Reset to Original
+                </button>
+
+                <button
+                    type="button"
+                    id="downloadButton"
+                    class="secondary-button download-button"
+                    disabled
+                >
+                    Download Output
+                </button>
+
+            </section>
+
+            <section class="image-workspace">
+
+                <div class="image-panel">
+
+                    <h2>Original Image</h2>
+
+                    <canvas
+                        id="inputCanvas"
+                        width="640"
+                        height="420"
+                    ></canvas>
+
+                    <p id="inputPlaceholder">
+                        Upload an image to begin
+                    </p>
+
+                </div>
+
+                <div class="arrow">
+                    →
+                </div>
+
+                <div class="image-panel">
+
+                    <h2>GPU Processed Image</h2>
+
+                    <canvas
+                        id="outputCanvas"
+                        width="640"
+                        height="420"
+                    ></canvas>
+
+                    <p id="outputPlaceholder">
+                        GPU output will appear here
+                    </p>
+
+                </div>
+
+            </section>
+
+            <section class="filter-section">
+
+                <h2>Image Processing Effects</h2>
+
+                <div class="filter-buttons">
+
+                    <button
+                        type="button"
+                        data-filter="original"
+                    >
+                        Original
+                    </button>
+
+                    <button
+                        type="button"
+                        data-filter="grayscale"
+                    >
+                        Grayscale
+                    </button>
+
+                    <button
+                        type="button"
+                        data-filter="negative"
+                    >
+                        Negative
+                    </button>
+
+                    <button
+                        type="button"
+                        data-filter="sepia"
+                    >
+                        Sepia
+                    </button>
+
+                    <button
+                        type="button"
+                        data-filter="brightness"
+                    >
+                        Brightness
+                    </button>
+
+                    <button
+                        type="button"
+                        data-filter="contrast"
+                    >
+                        Contrast
+                    </button>
+
+                    <button
+                        type="button"
+                        data-filter="blur"
+                    >
+                        Gaussian Blur
+                    </button>
+
+                    <button
+                        type="button"
+                        data-filter="edge"
+                    >
+                        Edge Detection
+                    </button>
+
+                    <button
+                        type="button"
+                        data-filter="cartoon"
+                    >
+                        Cartoon
+                    </button>
+
+                    <button
+                        type="button"
+                        data-filter="thermal"
+                    >
+                        Thermal Vision
+                    </button>
+
+                </div>
+
+            </section>
+
+            <section class="pipeline-section">
+
+                <h2>Parallel Execution Pipeline</h2>
+
+                <div class="pipeline">
+
+                    <div
+                        id="pipelineInput"
+                        class="pipeline-step"
+                    >
+                        <span>1</span>
+                        <p>Input Image</p>
+                    </div>
+
+                    <div class="pipeline-arrow">
+                        →
+                    </div>
+
+                    <div
+                        id="pipelineUpload"
+                        class="pipeline-step"
+                    >
+                        <span>2</span>
+                        <p>Upload to GPU</p>
+                    </div>
+
+                    <div class="pipeline-arrow">
+                        →
+                    </div>
+
+                    <div
+                        id="pipelineVertex"
+                        class="pipeline-step"
+                    >
+                        <span>3</span>
+                        <p>Vertex Shader</p>
+                    </div>
+
+                    <div class="pipeline-arrow">
+                        →
+                    </div>
+
+                    <div
+                        id="pipelineCompute"
+                        class="pipeline-step"
+                    >
+                        <span>4</span>
+                        <p>Compute Shader</p>
+                    </div>
+
+                    <div class="pipeline-arrow">
+                        →
+                    </div>
+
+                    <div
+                        id="pipelineFragment"
+                        class="pipeline-step"
+                    >
+                        <span>5</span>
+                        <p>Fragment Shader / Display</p>
+                    </div>
+
+                    <div class="pipeline-arrow">
+                        →
+                    </div>
+
+                    <div
+                        id="pipelineOutput"
+                        class="pipeline-step"
+                    >
+                        <span>6</span>
+                        <p>Processed Output</p>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <section class="operation-section">
+
+                <div class="section-heading">
+
+                    <div>
+                        <p class="eyebrow">Live shader detail</p>
+                        <h2>Current Shader Operation</h2>
+                    </div>
+
+                    <strong
+                        id="operationName"
+                        class="operation-name"
+                    >
+                        No operation
+                    </strong>
+
+                </div>
+
+                <div class="operation-grid">
+
+                    <div class="operation-item">
+                        <span>Shader Type</span>
+                        <strong id="shaderType">
+                            Waiting for image
+                        </strong>
+                    </div>
+
+                    <div class="operation-item">
+                        <span>Processing Method</span>
+                        <strong id="processingMethod">
+                            -
+                        </strong>
+                    </div>
+
+                    <div class="operation-item explanation-item">
+                        <span>Simple Explanation</span>
+                        <strong id="operationExplanation">
+                            Upload an image to inspect its shader operation.
+                        </strong>
+                    </div>
+
+                    <div
+                        id="workgroupInfoRow"
+                        class="operation-item workgroup-item"
+                        hidden
+                    >
+                        <span>Workgroup</span>
+
+                        <strong id="workgroupInfo">
+                            8 × 8 = 64 work items per workgroup
+                        </strong>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <section class="gpu-dashboard">
+
+                <div class="shader-panel">
+
+                    <h2>Shader Pipeline</h2>
+
+                    <div class="shader-row">
+
+                        <span>Vertex Shader</span>
+
+                        <span
+                            id="vertexStatus"
+                            class="status waiting"
+                        >
+                            Waiting
+                        </span>
+
+                    </div>
+
+                    <div class="shader-row">
+
+                        <span>Fragment Shader</span>
+
+                        <span
+                            id="fragmentStatus"
+                            class="status waiting"
+                        >
+                            Waiting
+                        </span>
+
+                    </div>
+
+                    <div class="shader-row">
+
+                        <span>Compute Shader</span>
+
+                        <span
+                            id="computeStatus"
+                            class="status waiting"
+                        >
+                            Waiting
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="statistics-panel">
+
+                    <h2>GPU Statistics</h2>
+
+                    <div class="stat-row">
+                        <span>API</span>
+                        <strong id="gpuApi">WebGPU</strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>GPU Adapter</span>
+                        <strong id="gpuAdapter">
+                            Detecting...
+                        </strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>Backend</span>
+                        <strong id="gpuBackend">
+                            Detecting...
+                        </strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>Execution Model</span>
+
+                        <strong id="executionModel">
+                            Parallel pixel/work-item processing
+                        </strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>Current Pipeline</span>
+
+                        <strong id="currentPipeline">
+                            Waiting for image
+                        </strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>Active Shader</span>
+                        <strong id="activeShader">
+                            None
+                        </strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>Resolution</span>
+                        <strong id="resolution">-</strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>Pixels Processed</span>
+                        <strong id="pixelCount">-</strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>GPU Work Items</span>
+                        <strong id="threadCount">-</strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>Processing Time</span>
+                        <strong id="processingTime">-</strong>
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <script
+        type="module"
+        src="js/app.js"
+    ></script>
+
+</body>
+</html>
